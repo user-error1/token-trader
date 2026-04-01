@@ -17,7 +17,9 @@ No popups. No banners. No interruptions. Just one dim line of ASCII text while y
 
 1. The plugin displays a single sponsored message in Claude Code's **status line** — the persistent bar at the bottom of the terminal.
 2. After each Claude response, a verified impression is logged.
-3. Impressions convert to credits that apply against your Claude Code bill.
+3. Earn enough impressions and you receive a free month of Claude Pro.
+
+> **Roadmap:** We're working toward a direct Anthropic integration where ad revenue applies as credits against your usage limits automatically. If you're on the Anthropic team and interested in making this happen — we'd love to talk.
 
 Ads are plain text, capped at 120 characters, and rendered with dim styling so they stay out of your way. No images, animation, or color injection.
 
