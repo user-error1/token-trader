@@ -1,0 +1,10 @@
+{
+  "name": "token-trader",
+  "version": "0.1.0",
+  "description": "Displays 1-line ASCII sponsored ads during the prompt thinking phase and logs impressions locally.",
+  "author": {
+    "name": "TokenTrader"
+  },
+  "keywords": ["ads", "terminal", "credits", "sponsored"],
+  "hooks": "../hooks/hooks.json"
+}

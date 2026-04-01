@@ -1,0 +1,27 @@
+[
+  {
+    "id": "securellms.org_001",
+    "advertiser": "SecureLLMs",
+    "text": "SecureLLMs.org: Private AI / LLM infra for your buiz. Book demo → securellms.org"
+  },
+  {
+    "id": "vercel_001",
+    "advertiser": "Vercel",
+    "text": "Vercel: Deploy in seconds. Zero config, instant rollbacks. vercel.com"
+  },
+  {
+    "id": "supabase_001",
+    "advertiser": "Supabase",
+    "text": "Supabase: Postgres, auth, storage, and edge functions. Free tier → supabase.com"
+  },
+  {
+    "id": "wiz_001",
+    "advertiser": "Wiz",
+    "text": "Wiz: Cloud security built for how your team actually ships. wiz.io/demo"
+  },
+  {
+    "id": "planetscale_001",
+    "advertiser": "PlanetScale",
+    "text": "PlanetScale: Serverless MySQL with branching. Scale without drama. planetscale.com"
+  }
+]
