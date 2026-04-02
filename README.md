@@ -37,6 +37,10 @@ The installer registers the plugin with Claude Code by updating `~/.claude/setti
 
 Restart Claude Code after installing.
 
+## About This Project
+
+The TokenTrader plugin is **open source** — you can review, audit, and verify it doesn't log your keystrokes or content. However, it only works with the official TokenTrader backend at `backend.example.com`. The backend (impression verification, fraud detection, advertiser management, credit system) is proprietary and closed source.
+
 ## Ad Format
 
 - Pure ASCII, single line, terminal-native font
