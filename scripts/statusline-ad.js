@@ -20,6 +20,21 @@ const BACKEND_URL = process.env.TOKEN_TRADER_BACKEND_URL || 'https://token-trade
 const LOCAL_ADS_PATH = path.join(__dirname, 'ads.json');
 const CACHE_PATH = path.join(os.homedir(), '.token-trader', 'cached-ad.json');
 const NONCE_PATH = path.join(os.homedir(), '.token-trader', 'pow-nonces.jsonl');
+const AUTH_PATH = path.join(os.homedir(), '.token-trader', 'auth.json');
+
+/**
+ * Read the device's public key from the saved auth file, if present.
+ * Falls back to 'placeholder' for unauthenticated installs.
+ */
+function getDeviceKeyHeader() {
+  try {
+    const auth = JSON.parse(fs.readFileSync(AUTH_PATH, 'utf-8'));
+    if (auth && auth.public_key) return auth.public_key;
+  } catch (_) {
+    // Not authenticated yet — fine, /ads/next is unauthenticated.
+  }
+  return 'placeholder';
+}
 
 /**
  * Fetch ad from backend API with timeout.
@@ -31,7 +46,7 @@ async function fetchAdFromBackend() {
 
     const response = await fetch(`${BACKEND_URL}/api/v1/ads/next`, {
       headers: {
-        'X-Device-Key': 'placeholder', // Phase 2: will use actual device fingerprint
+        'X-Device-Key': getDeviceKeyHeader(),
       },
       signal: controller.signal,
     });

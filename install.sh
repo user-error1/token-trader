@@ -94,6 +94,13 @@ fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8')
 console.log('Hook and statusLine registered in', settingsPath);
 EOF
 
+# ── 3. Generate device keypair + fingerprint ──────────────────────────────────
+echo ""
+echo "Setting up device identity..."
+node "$PLUGIN_DIR/scripts/lib/generate-key.js"
+chmod 600 "$HOME/.token-trader/device.key" 2>/dev/null || true
+
 echo ""
 echo "TokenTrader installed. Restart Claude Code to activate."
+echo "Next: run 'node $PLUGIN_DIR/scripts/auth.js' to sign in with GitHub."
 echo "Impression log: ~/.token-trader/impressions.json"
