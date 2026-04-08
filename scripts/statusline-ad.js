@@ -21,6 +21,12 @@ const LOCAL_ADS_PATH = path.join(__dirname, 'ads.json');
 const CACHE_PATH = path.join(os.homedir(), '.token-trader', 'cached-ad.json');
 const NONCE_PATH = path.join(os.homedir(), '.token-trader', 'pow-nonces.jsonl');
 const AUTH_PATH = path.join(os.homedir(), '.token-trader', 'auth.json');
+const NOTICE_PATH = path.join(os.homedir(), '.token-trader', 'session-notice.flag');
+const FETCH_TIMEOUT_MS = 500;
+
+// Phase 7: version header for the backend upgrade gate.
+let PLUGIN_VERSION = '0.0.0';
+try { PLUGIN_VERSION = require('../package.json').version; } catch (_) {}
 
 /**
  * Read the device's public key from the saved auth file, if present.
@@ -42,11 +48,12 @@ function getDeviceKeyHeader() {
 async function fetchAdFromBackend() {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
     const response = await fetch(`${BACKEND_URL}/api/v1/ads/next`, {
       headers: {
         'X-Device-Key': getDeviceKeyHeader(),
+        'X-Plugin-Version': PLUGIN_VERSION,
       },
       signal: controller.signal,
     });
@@ -89,7 +96,19 @@ async function fetchAdFromBackend() {
 
     return ad;
   } catch (err) {
-    // Fall through to cached/local fallback
+    // One-shot per-session notice: log once per Claude Code parent process.
+    // We key on PPID (Claude Code is our parent) stored in a flag file, so
+    // repeated statusline invocations within the same session stay silent.
+    try {
+      const ppid = String(process.ppid);
+      const prior = fs.existsSync(NOTICE_PATH) ? fs.readFileSync(NOTICE_PATH, 'utf-8').trim() : '';
+      if (prior !== ppid) {
+        fs.mkdirSync(path.dirname(NOTICE_PATH), { recursive: true });
+        fs.writeFileSync(NOTICE_PATH, ppid);
+        const logLine = `${new Date().toISOString()} warn statusline: backend unreachable (${err.message || 'timeout'}) — using local fallback\n`;
+        try { fs.appendFileSync(path.join(os.homedir(), '.token-trader', 'debug.log'), logLine); } catch (_) {}
+      }
+    } catch (_) {}
     return null;
   }
 }

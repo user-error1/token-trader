@@ -28,14 +28,31 @@ Ads are plain text, capped at 120 characters, and rendered with dim styling so t
 ```bash
 git clone <repo-url>
 cd token-trader
-./install.sh
+./install.sh      # registers the plugin with Claude Code
+npm link          # installs the `token-trader` CLI on your PATH
 ```
 
-The installer registers the plugin with Claude Code by updating `~/.claude/settings.json`.
+Then sign in and you're done:
 
-> Run `install.sh` when Claude Code is **not** running to avoid settings being overwritten.
+```bash
+token-trader login       # GitHub device flow — opens a browser
+token-trader status      # see your current month's earnings
+token-trader doctor      # health check if anything feels off
+```
 
-Restart Claude Code after installing.
+> Run `install.sh` when Claude Code is **not** running to avoid settings being overwritten. Restart Claude Code after installing.
+
+### CLI commands
+
+```
+token-trader login        Sign in with GitHub and register this device
+token-trader logout       Delete local auth + device key
+token-trader status       Show current month's credit ledger
+token-trader devices      List registered devices (--revoke <prefix> to revoke one)
+token-trader sync         Force-flush the local impression queue to the backend
+token-trader doctor       Health check across backend, auth, device key, queue
+token-trader help         Print usage
+```
 
 ## About This Project
 

@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+/**
+ * token-trader — CLI entry point.
+ *
+ * Dispatches `token-trader <sub>` to the handler in src/commands/<sub>.js.
+ * Each command module exports `run(args)` (async). Errors bubble up and
+ * exit 1 with the error message.
+ */
+
+const path = require('path');
+
+const COMMANDS = {
+  help:    () => require('../src/commands/help'),
+  doctor:  () => require('../src/commands/doctor'),
+  login:   () => require('../src/commands/login'),
+  logout:  () => require('../src/commands/logout'),
+  status:  () => require('../src/commands/status'),
+  devices: () => require('../src/commands/devices'),
+  sync:    () => require('../src/commands/sync'),
+};
+
+async function main() {
+  const [, , sub, ...rest] = process.argv;
+
+  if (!sub || sub === '--help' || sub === '-h') {
+    return require('../src/commands/help').run();
+  }
+
+  const loader = COMMANDS[sub];
+  if (!loader) {
+    console.error(`token-trader: unknown command '${sub}'`);
+    console.error(`Run 'token-trader help' for usage.`);
+    process.exit(1);
+  }
+
+  let mod;
+  try {
+    mod = loader();
+  } catch (err) {
+    if (err && err.code === 'MODULE_NOT_FOUND') {
+      console.error(`token-trader: '${sub}' is not implemented yet (landing in a later chunk).`);
+      process.exit(1);
+    }
+    throw err;
+  }
+
+  if (rest.includes('--help')) {
+    if (mod.help) return mod.help();
+    return require('../src/commands/help').run();
+  }
+
+  await mod.run(rest);
+}
+
+main().catch((err) => {
+  console.error(`token-trader: ${err.message || err}`);
+  process.exit(1);
+});
