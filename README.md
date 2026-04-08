@@ -7,6 +7,9 @@ TokenTrader is a Claude Code plugin that displays lightweight sponsored messages
 No popups. No banners. No interruptions. Just one dim line of ASCII text while you code.
 
 ```
+ ▐▛███▜▌   Claude Code v2.1.96                                      
+▝▜█████▛▘  Opus 4.6 with medium effort · Claude Max                 
+  ▘▘ ▝▝    ~/repos                                                                                                                      
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Normal prompt here, get paid while you vibe code!                                                                                                                                                 
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -18,6 +21,22 @@ No popups. No banners. No interruptions. Just one dim line of ASCII text while y
 1. The plugin displays a single sponsored message in Claude Code's **status line** — the persistent bar at the bottom of the terminal.
 2. After each Claude response, a verified impression is logged.
 3. Earn enough impressions and you receive a free month of Claude Pro.
+
+Check your progress any time with `token-trader status`:
+
+```
+➜  token-trader git:(main) ✗ token-trader status
+
+TokenTrader — April 2026
+
+  Earned this month:  $17.38 / $20.00
+  [██████████████████████████████████▒░░░░░]  86.9%
+
+  Impressions today:      142 / 200
+  Impressions this month: 2,483
+
+  At your current pace, gift card in ~3 days.
+```
 
 > **Roadmap:** We're working toward a direct Anthropic integration where ad revenue applies as credits against your usage limits automatically. If you're on the Anthropic team and interested in making this happen — we'd love to talk.
 
