@@ -91,7 +91,7 @@ token-trader help         Print usage
 
 ## About This Project
 
-The TokenTrader plugin is **open source** — you can review, audit, and verify it doesn't log your keystrokes or content. However, it only works with the official TokenTrader backend at `backend.example.com`. The backend (impression verification, fraud detection, advertiser management, credit system) is proprietary and closed source.
+The TokenTrader plugin is **open source** — you can review, audit, and verify it doesn't log your keystrokes or content. However, it only works with the official TokenTrader backend at `https://token-trader-api.fly.dev`. The backend (impression verification, fraud detection, advertiser management, credit system) is proprietary and closed source.
 
 ## Ad Format
 
