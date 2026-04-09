@@ -9,6 +9,44 @@
 
 set -euo pipefail
 
+# ── 0. Ensure node + npm are available ───────────────────────────────────────
+ensure_node() {
+  if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "node/npm not found — attempting to install..."
+  case "$(uname -s)" in
+    Darwin)
+      if ! command -v brew >/dev/null 2>&1; then
+        echo "ERROR: Homebrew not installed. Install it from https://brew.sh then re-run."
+        exit 1
+      fi
+      brew install node
+      ;;
+    Linux)
+      if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update && sudo apt-get install -y nodejs npm
+      elif command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y nodejs npm
+      elif command -v pacman >/dev/null 2>&1; then
+        sudo pacman -S --noconfirm nodejs npm
+      else
+        echo "ERROR: No supported package manager found. Install Node.js manually from https://nodejs.org"
+        exit 1
+      fi
+      ;;
+    *)
+      echo "ERROR: Unsupported OS. Install Node.js manually from https://nodejs.org"
+      exit 1
+      ;;
+  esac
+  if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+    echo "ERROR: node/npm still not found after install attempt."
+    exit 1
+  fi
+}
+ensure_node
+
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 PLUGINS_DIR="$CLAUDE_DIR/plugins"
