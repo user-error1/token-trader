@@ -1,15 +1,24 @@
 #!/bin/bash
-# TokenTrader — install.sh
+# TokenTrader — install.sh (OPTIONAL)
 #
-# Registers the plugin with Claude Code by:
-#   1. Symlinking ~/repos/token-trader into ~/.claude/plugins/token-trader
-#   2. Adding the Stop hook to ~/.claude/settings.json
+# You do NOT need this script for normal use. The Claude Code plugin handles
+# everything on its own — install it from inside Claude Code with:
+#
+#   /plugin marketplace add user-error1/token-trader
+#   /plugin install token-trader@token-trader-local
+#
+# This script only exists for power users who want the `token-trader` binary
+# available in a regular terminal (outside Claude Code). It will:
+#   1. Verify node + npm are installed (and install them if missing)
+#   2. `npm link` the token-trader CLI onto your $PATH
+#
+# The device keypair is generated lazily on first `token-trader login`, so
+# this script does not touch ~/.token-trader.
 #
 # Safe to run multiple times (idempotent).
 
 set -euo pipefail
 
-# ── 0. Ensure node + npm are available ───────────────────────────────────────
 ensure_node() {
   if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
     return 0
@@ -48,102 +57,13 @@ ensure_node() {
 ensure_node
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$HOME/.claude"
-PLUGINS_DIR="$CLAUDE_DIR/plugins"
-SETTINGS_FILE="$CLAUDE_DIR/settings.json"
-HOOK_COMMAND="$PLUGIN_DIR/scripts/show-ad.sh"
-STATUSLINE_COMMAND="node $PLUGIN_DIR/scripts/statusline-ad.js"
 
-# ── 1. Symlink into ~/.claude/plugins/ ────────────────────────────────────────
-mkdir -p "$PLUGINS_DIR"
-LINK="$PLUGINS_DIR/token-trader"
-if [ -L "$LINK" ]; then
-  echo "Plugin symlink already exists: $LINK"
-elif [ -e "$LINK" ]; then
-  echo "ERROR: $LINK exists but is not a symlink. Remove it manually and re-run."
-  exit 1
-else
-  ln -s "$PLUGIN_DIR" "$LINK"
-  echo "Created symlink: $LINK -> $PLUGIN_DIR"
-fi
-
-# ── 2. Patch ~/.claude/settings.json ──────────────────────────────────────────
-# Requires node (available wherever Claude Code runs).
-
-node - "$SETTINGS_FILE" "$HOOK_COMMAND" "$STATUSLINE_COMMAND" <<'EOF'
-const fs = require('fs');
-const path = require('path');
-
-const settingsPath = process.argv[2];
-const hookCommand = process.argv[3];
-const statusLineCommand = process.argv[4];
-
-let settings = {};
-if (fs.existsSync(settingsPath)) {
-  try {
-    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  } catch (e) {
-    console.error('ERROR: Could not parse', settingsPath, '—', e.message);
-    process.exit(1);
-  }
-}
-
-if (!settings.hooks) settings.hooks = {};
-
-// Remove any legacy hooks from previous installs
-for (const event of ['UserPromptSubmit', 'PermissionRequest']) {
-  if (settings.hooks[event]) {
-    settings.hooks[event] = settings.hooks[event].filter(group =>
-      !(Array.isArray(group.hooks) && group.hooks.some(h => h.command === hookCommand))
-    );
-    if (settings.hooks[event].length === 0) delete settings.hooks[event];
-  }
-}
-
-if (!settings.hooks.Stop) settings.hooks.Stop = [];
-
-// Check if our hook is already registered
-const alreadyRegistered = settings.hooks.Stop.some(group =>
-  Array.isArray(group.hooks) &&
-  group.hooks.some(h => h.command === hookCommand)
-);
-
-if (alreadyRegistered) {
-  console.log('Hook already registered in', settingsPath);
-  process.exit(0);
-}
-
-settings.hooks.Stop.push({
-  hooks: [
-    {
-      type: 'command',
-      command: hookCommand
-    }
-  ]
-});
-
-// Register statusLine for persistent ad display
-settings.statusLine = {
-  type: 'command',
-  command: statusLineCommand
-};
-
-fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-console.log('Hook and statusLine registered in', settingsPath);
-EOF
-
-# ── 3. Generate device keypair + fingerprint ──────────────────────────────────
-echo ""
-echo "Setting up device identity..."
-node "$PLUGIN_DIR/scripts/lib/generate-key.js"
-chmod 600 "$HOME/.token-trader/device.key" 2>/dev/null || true
-
-# ── 4. Link the token-trader CLI globally ────────────────────────────────────
-echo ""
 echo "Linking token-trader CLI..."
 (cd "$PLUGIN_DIR" && npm link)
 
 echo ""
-echo "TokenTrader installed. Restart Claude Code to activate."
-echo "Next: run 'token-trader login' to sign in with GitHub."
-echo "Impression log: ~/.token-trader/impressions.json"
+echo "Done. 'token-trader' is now available in your terminal."
+echo ""
+echo "Remember: the Claude Code plugin is a separate install. From inside Claude Code:"
+echo "  /plugin marketplace add user-error1/token-trader"
+echo "  /plugin install token-trader@token-trader-local"

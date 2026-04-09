@@ -44,24 +44,40 @@ Ads are plain text, capped at 120 characters, and rendered with dim styling so t
 
 ## Installation
 
+Open Claude Code and run:
+
+```
+/plugin marketplace add user-error1/token-trader
+/plugin install token-trader@token-trader-local
+```
+
+That's it. Restart Claude Code. The plugin registers its own status-line hook, so ads start rendering on your next prompt. Then sign in:
+
+```
+/token-trader:login
+```
+
+This kicks off the GitHub device flow — copy the code, approve in your browser, and you're earning credits.
+
+### Slash commands
+
+```
+/token-trader:login        Sign in with GitHub and register this device
+/token-trader:status       Show current month's credit ledger
+/token-trader:devices      List registered devices
+/token-trader:sync         Force-flush the local impression queue to the backend
+/token-trader:doctor       Health check across backend, auth, device key, queue
+```
+
+### Optional: bare CLI
+
+Want to check status or sync from a regular terminal (outside Claude Code)? Clone the repo and run the setup script — this adds a `token-trader` binary to your `$PATH`. Not required for normal use.
+
 ```bash
-git clone <repo-url>
+git clone https://github.com/user-error1/token-trader
 cd token-trader
-./install.sh      # registers the plugin with Claude Code
-npm link          # installs the `token-trader` CLI on your PATH
+./install.sh
 ```
-
-Then sign in and you're done:
-
-```bash
-token-trader login       # GitHub device flow — opens a browser
-token-trader status      # see your current month's earnings
-token-trader doctor      # health check if anything feels off
-```
-
-> Run `install.sh` when Claude Code is **not** running to avoid settings being overwritten. Restart Claude Code after installing.
-
-### CLI commands
 
 ```
 token-trader login        Sign in with GitHub and register this device

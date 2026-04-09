@@ -1,10 +1,21 @@
 {
   "name": "token-trader",
   "version": "0.1.0",
-  "description": "Displays 1-line ASCII sponsored ads during the prompt thinking phase and logs impressions locally.",
+  "description": "Earn credits for Claude Pro by displaying 1-line ASCII sponsored ads in the Claude Code status line.",
   "author": {
     "name": "TokenTrader"
   },
   "keywords": ["ads", "terminal", "credits", "sponsored"],
-  "hooks": "../hooks/hooks.json"
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/show-ad.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

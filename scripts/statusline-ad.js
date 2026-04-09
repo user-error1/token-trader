@@ -140,6 +140,35 @@ function getFallbackAd() {
 }
 
 /**
+ * Word-wrap a string to the given width. Returns the original string if
+ * width is falsy (not a TTY) or >= string length. Breaks on spaces; if a
+ * single word exceeds the width, it gets hard-split.
+ */
+function wrapAd(text, width) {
+  if (!width || width <= 0 || text.length <= width) return text;
+  const words = text.split(' ');
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    if (!current) {
+      current = word;
+    } else if (current.length + 1 + word.length <= width) {
+      current += ' ' + word;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+    // Hard-split any word longer than the width.
+    while (current.length > width) {
+      lines.push(current.slice(0, width));
+      current = current.slice(width);
+    }
+  }
+  if (current) lines.push(current);
+  return lines.join('\n');
+}
+
+/**
  * Main: fetch ad and print to stdout.
  */
 (async () => {
@@ -154,8 +183,9 @@ function getFallbackAd() {
     process.exit(0);
   }
 
-  // Print to stdout — Claude Code displays this in the status line
-  process.stdout.write(`[ad] ${ad.text}`);
+  // Print to stdout — Claude Code displays this in the status line.
+  // Wrap to terminal width so shrunk windows don't clip the ad.
+  process.stdout.write(wrapAd(`[ad] ${ad.text}`, process.stdout.columns));
   process.exit(0);
 })().catch(() => {
   process.exit(0);

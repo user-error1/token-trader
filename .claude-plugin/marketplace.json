@@ -1,0 +1,11 @@
+{
+  "name": "token-trader-local",
+  "owner": { "name": "TokenTrader" },
+  "plugins": [
+    {
+      "name": "token-trader",
+      "source": "./",
+      "description": "Earn credits for Claude Pro by viewing 1-line ASCII sponsored ads."
+    }
+  ]
+}
