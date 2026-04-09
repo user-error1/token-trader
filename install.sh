@@ -138,7 +138,12 @@ echo "Setting up device identity..."
 node "$PLUGIN_DIR/scripts/lib/generate-key.js"
 chmod 600 "$HOME/.token-trader/device.key" 2>/dev/null || true
 
+# ── 4. Link the token-trader CLI globally ────────────────────────────────────
+echo ""
+echo "Linking token-trader CLI..."
+(cd "$PLUGIN_DIR" && npm link)
+
 echo ""
 echo "TokenTrader installed. Restart Claude Code to activate."
-echo "Next: run 'node $PLUGIN_DIR/scripts/auth.js' to sign in with GitHub."
+echo "Next: run 'token-trader login' to sign in with GitHub."
 echo "Impression log: ~/.token-trader/impressions.json"
