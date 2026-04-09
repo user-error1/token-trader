@@ -44,7 +44,7 @@ async function run() {
   console.log('');
   console.log(`TokenTrader — ${formatMonth(data.month)}`);
   console.log('');
-  console.log(`  Earned this month:  $${earned.toFixed(2)} / $${MONTHLY_GOAL.toFixed(2)}`);
+  console.log(`  Earned this month:  $${earned.toFixed(4)} / $${MONTHLY_GOAL.toFixed(2)}`);
   console.log(`  ${renderBar(fraction)}  ${pct}%`);
   console.log('');
   console.log(`  Impressions today:      ${data.today_impressions} / 200`);
