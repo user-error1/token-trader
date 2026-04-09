@@ -39,7 +39,8 @@ function checkAuth() {
       return result(FAIL, 'Auth token', 'auth.json present but no access_token');
     }
     const who = auth.user?.github_username ? `@${auth.user.github_username}` : '(unknown user)';
-    const expires = auth.expires_at ? new Date(auth.expires_at).toISOString().slice(0, 10) : 'unknown';
+    // expires_at is stored as Unix seconds; Date expects ms.
+    const expires = auth.expires_at ? new Date(auth.expires_at * 1000).toISOString().slice(0, 10) : 'unknown';
     return result(PASS, 'Auth token', `${who}, expires ${expires}`);
   } catch (err) {
     return result(FAIL, 'Auth token', `unreadable: ${err.message}`);
