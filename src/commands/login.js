@@ -4,6 +4,8 @@
  * GitHub device flow → store JWT → generate Ed25519 keypair → register device.
  * All in one shot. Auto-opens the verification URL in the default browser.
  */
+const fs = require('fs');
+const path = require('path');
 const { spawn } = require('child_process');
 const { request } = require('../lib/backend');
 const auth = require('../lib/auth');
@@ -13,6 +15,44 @@ const {
   getPublicKeyBase64,
 } = require('../../scripts/lib/device-key');
 const { getOrCreateFingerprint } = require('../../scripts/lib/device-fingerprint');
+
+/**
+ * Ensure the Claude Code statusLine is configured to show ads.
+ * Reads ~/.claude/settings.json, adds or updates the statusLine entry.
+ * Handles version upgrades by detecting stale paths.
+ */
+function ensureStatusLine() {
+  const pluginRoot = path.resolve(__dirname, '..', '..');
+  const settingsPath = path.join(
+    process.env.HOME || process.env.USERPROFILE,
+    '.claude',
+    'settings.json'
+  );
+
+  let settings = {};
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch (_) {
+    // File missing or malformed — start fresh.
+  }
+
+  const expected = `node ${pluginRoot}/scripts/statusline-ad.js`;
+
+  // Already correct — nothing to do.
+  if (settings.statusLine && settings.statusLine.command === expected) return false;
+
+  // Skip if user has a non-token-trader statusLine configured.
+  if (settings.statusLine && settings.statusLine.command &&
+      !settings.statusLine.command.includes('statusline-ad.js')) {
+    return false;
+  }
+
+  settings.statusLine = { type: 'command', command: expected };
+
+  fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+  return true;
+}
 
 function openBrowser(url) {
   const cmd =
@@ -30,7 +70,13 @@ function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 async function run() {
   if (auth.read()) {
-    console.log('Already signed in. Run `token-trader logout` first to switch accounts.');
+    // Already signed in — still ensure status line is configured (fixes
+    // upgrades and fresh installs that skipped install.sh).
+    if (ensureStatusLine()) {
+      console.log('Already signed in. Status line configured — ads will appear on next Claude Code session.');
+    } else {
+      console.log('Already signed in. Run `token-trader logout` first to switch accounts.');
+    }
     return;
   }
 
@@ -125,6 +171,11 @@ async function run() {
 
   log.info(`login ok user=${tokenData.user.github_username} device=${reg.body.device_id}`);
   console.log(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
+
+  if (ensureStatusLine()) {
+    console.log('Status line configured — ads will appear on next Claude Code session.');
+  }
+
   console.log('You are all set. Run `token-trader status` to see your balance.');
 }
 

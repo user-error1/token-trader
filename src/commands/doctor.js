@@ -10,6 +10,7 @@
  * reachable, auth valid, plugin version up-to-date).
  */
 const fs = require('fs');
+const path = require('path');
 const {
   AUTH_PATH,
   DEVICE_KEY_PATH,
@@ -121,6 +122,38 @@ async function checkBackend() {
   }
 }
 
+function checkStatusLine() {
+  const pluginRoot = path.resolve(__dirname, '..', '..');
+  const settingsPath = path.join(
+    process.env.HOME || process.env.USERPROFILE,
+    '.claude',
+    'settings.json'
+  );
+
+  let settings = {};
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+  } catch (_) {
+    return result(FAIL, 'Status line', '~/.claude/settings.json missing or unreadable');
+  }
+
+  if (!settings.statusLine) {
+    return result(FAIL, 'Status line', 'not configured — run `token-trader login` or re-login to fix');
+  }
+
+  if (!settings.statusLine.command || !settings.statusLine.command.includes('statusline-ad.js')) {
+    return result(WARN, 'Status line', 'configured but not pointing to token-trader');
+  }
+
+  // Check if the referenced script actually exists.
+  const match = settings.statusLine.command.match(/node\s+(.+\/statusline-ad\.js)/);
+  if (match && !fs.existsSync(match[1])) {
+    return result(FAIL, 'Status line', `script not found at ${match[1]} — plugin path may be stale`);
+  }
+
+  return result(PASS, 'Status line', 'configured');
+}
+
 async function checkAuthLive() {
   if (!fs.existsSync(AUTH_PATH)) {
     return result(WARN, 'Auth live check', 'skipped — not signed in');
@@ -145,6 +178,7 @@ async function run() {
   const checks = [
     checkAuth(),
     checkDeviceKey(),
+    checkStatusLine(),
     checkQueue(),
     checkInventory(),
     checkDebugLog(),
