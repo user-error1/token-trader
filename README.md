@@ -22,12 +22,10 @@ No popups. No banners. No interruptions. Just one dim line of ASCII text while y
 2. After each Claude response, a verified impression is logged.
 3. Earn enough impressions and you receive a free month of Claude Pro.
 
-Check your progress any time with `token-trader status`:
+Check your progress any time with `/token-trader:status`:
 
 ```
-➜  token-trader git:(main) ✗ token-trader status
-
-TokenTrader — April 2026
+⏺ TokenTrader — April 2026
 
   Earned this month:  $17.38 / $20.00
   [██████████████████████████████████▒░░░░░]  86.9%
@@ -49,20 +47,22 @@ Open Claude Code and run:
 ```
 /plugin marketplace add user-error1/token-trader
 /plugin install token-trader@token-trader
+/reload-plugins
 ```
 
-That's it. Restart Claude Code. The plugin registers its own status-line hook, so ads start rendering on your next prompt. Then sign in:
+That's it. Then sign in:
 
 ```
 /token-trader:login
 ```
 
-This kicks off the GitHub device flow — copy the code, approve in your browser, and you're earning credits.
+This kicks off the GitHub device flow — copy the code, approve in your browser, and you're earning credits. The plugin registers its own status-line hook, so small ads start rendering and you start getting paid. 
 
 ### Slash commands
 
 ```
 /token-trader:login        Sign in with GitHub and register this device
+/token-trader:logout       Logout of TokenTrader removing ads, auth, and device
 /token-trader:status       Show current month's credit ledger
 /token-trader:devices      List registered devices
 /token-trader:sync         Force-flush the local impression queue to the backend

@@ -45,7 +45,7 @@ async function run(args) {
     if (target.id === authData.device_id) {
       try { fs.unlinkSync(DEVICE_KEY_PATH); } catch (_) {}
       auth.clear();
-      console.log('(This was the current device — local auth and key deleted. Run `token-trader login` to re-register.)');
+      console.log('(This was the current device — local auth and key deleted. Run `/token-trader:login` to re-register.)');
     }
     return;
   }
@@ -65,7 +65,7 @@ async function run(args) {
     console.log(`  ${marker} ${shortFp(d.fingerprint)}  ${tag.padEnd(15)}  registered ${registered}   last seen ${lastSeen}`);
   }
   console.log(`\nUp to 3 active devices per account.`);
-  console.log(`Use 'token-trader devices --revoke <prefix>' to revoke one.\n`);
+  console.log(`Use '/token-trader:devices --revoke <prefix>' to revoke one.\n`);
 }
 
 module.exports = { run };

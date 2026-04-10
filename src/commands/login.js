@@ -75,7 +75,7 @@ async function run() {
     if (ensureStatusLine()) {
       console.log('Already signed in. Status line configured — ads will appear on next Claude Code session.');
     } else {
-      console.log('Already signed in. Run `token-trader logout` first to switch accounts.');
+      console.log('Already signed in. Run `/token-trader:logout` first to switch accounts.');
     }
     return;
   }
@@ -120,13 +120,13 @@ async function run() {
       process.exit(1);
     }
     if (poll.body.status === 'expired' || poll.status === 404) {
-      console.error('Device code expired. Run `token-trader login` again.');
+      console.error('Device code expired. Run `/token-trader:login` again.');
       process.exit(1);
     }
     // Anything else (5xx, unexpected shape) — bail out loudly instead of looping forever.
     if (poll.status >= 400) {
       console.error(`\nBackend error during poll: ${poll.status} ${poll.body?.error || JSON.stringify(poll.body)}`);
-      console.error('Check `fly logs` and re-run `token-trader login`.');
+      console.error('Check `fly logs` and re-run `/token-trader:login`.');
       process.exit(1);
     }
   }
@@ -176,7 +176,7 @@ async function run() {
     console.log('Status line configured — ads will appear on next Claude Code session.');
   }
 
-  console.log('You are all set. Run `token-trader status` to see your balance.');
+  console.log('You are all set. Run `/token-trader:status` to see your balance.');
 }
 
 module.exports = { run };

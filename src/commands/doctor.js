@@ -32,7 +32,7 @@ function result(status, label, detail) {
 
 function checkAuth() {
   if (!fs.existsSync(AUTH_PATH)) {
-    return result(FAIL, 'Auth token', 'not signed in — run `token-trader login`');
+    return result(FAIL, 'Auth token', 'not signed in — run `/token-trader:login`');
   }
   try {
     const auth = JSON.parse(fs.readFileSync(AUTH_PATH, 'utf-8'));
@@ -50,7 +50,7 @@ function checkAuth() {
 
 function checkDeviceKey() {
   if (!fs.existsSync(DEVICE_KEY_PATH)) {
-    return result(FAIL, 'Device key', 'missing — run `token-trader login`');
+    return result(FAIL, 'Device key', 'missing — run `/token-trader:login`');
   }
   try {
     const st = fs.statSync(DEVICE_KEY_PATH);
@@ -138,7 +138,7 @@ function checkStatusLine() {
   }
 
   if (!settings.statusLine) {
-    return result(FAIL, 'Status line', 'not configured — run `token-trader login` or re-login to fix');
+    return result(FAIL, 'Status line', 'not configured — run `/token-trader:login` or re-login to fix');
   }
 
   if (!settings.statusLine.command || !settings.statusLine.command.includes('statusline-ad.js')) {
@@ -164,7 +164,7 @@ async function checkAuthLive() {
       const n = (res.body.devices || []).length;
       return result(PASS, 'Auth live check', `valid, ${n} active device${n === 1 ? '' : 's'}`);
     }
-    if (res.status === 401) return result(FAIL, 'Auth live check', 'backend says token is invalid — run `token-trader login`');
+    if (res.status === 401) return result(FAIL, 'Auth live check', 'backend says token is invalid — run `/token-trader:login`');
     return result(WARN, 'Auth live check', `HTTP ${res.status}`);
   } catch (err) {
     return result(WARN, 'Auth live check', `network error: ${err.message}`);
