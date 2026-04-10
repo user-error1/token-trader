@@ -5,10 +5,7 @@
   "bin": {
     "token-trader": "bin/token-trader"
   },
-  "scripts": {
-    "test": "node test/queue.test.js && node test/sync.test.js"
-  },
-  "engines": {
+"engines": {
     "node": ">=18"
   },
   "keywords": ["claude-code", "ads", "terminal", "credits", "sponsored"]
