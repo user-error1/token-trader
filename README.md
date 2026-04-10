@@ -48,7 +48,7 @@ Open Claude Code and run:
 
 ```
 /plugin marketplace add user-error1/token-trader
-/plugin install token-trader@token-trader-local
+/plugin install token-trader@token-trader
 ```
 
 That's it. Restart Claude Code. The plugin registers its own status-line hook, so ads start rendering on your next prompt. Then sign in:
