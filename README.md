@@ -1,6 +1,10 @@
 # TokenTrader
 
+[![TokenTrader](tokentrader.dev.png)](https://tokentrader.dev)
+
 **Earn back your Claude Code subscription by running small, non-invasive ads in your terminal.**
+
+**Website:** [tokentrader.dev](https://tokentrader.dev)
 
 TokenTrader is a Claude Code plugin that displays lightweight sponsored messages in the status bar while you work. You use Claude Code like normal — we show a single line of text at the bottom of your terminal and use the ad revenue to offset your subscription cost.
 
