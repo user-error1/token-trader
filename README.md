@@ -93,6 +93,27 @@ token-trader doctor       Health check across backend, auth, device key, queue
 token-trader help         Print usage
 ```
 
+## What It Changes
+
+The plugin makes two changes to `~/.claude/settings.json`:
+
+**On `/token-trader:login`** — adds a `statusLine` entry so ads appear in the status bar:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node <plugin-path>/scripts/statusline-ad.js"
+  }
+}
+```
+
+**On `/token-trader:logout`** — removes the `statusLine` entry so ads stop.
+
+The plugin also registers a `Stop` hook (via `plugin.json`, not `settings.json`) that logs impressions after each Claude response. This hook is managed by the plugin system and does not modify your settings file.
+
+No other settings are changed. If you already have a non-TokenTrader `statusLine` configured, the plugin will not overwrite it.
+
 ## About This Project
 
 The TokenTrader plugin is **open source** — you can review, audit, and verify it doesn't log your keystrokes or content. However, it only works with the official TokenTrader backend at `https://token-trader-api.fly.dev`. The backend (impression verification, fraud detection, advertiser management, credit system) is proprietary and closed source.
