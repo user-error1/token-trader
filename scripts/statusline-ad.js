@@ -185,12 +185,28 @@ function removeStatusLine() {
 }
 
 /**
+ * Check whether the plugin is still installed by reading Claude Code's
+ * installed_plugins.json registry.  Returns true when token-trader appears
+ * in the plugins map; false otherwise (including on read/parse errors).
+ */
+function isPluginInstalled() {
+  try {
+    const installedPath = path.join(os.homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    const data = JSON.parse(fs.readFileSync(installedPath, 'utf-8'));
+    const plugins = data.plugins || {};
+    return Object.keys(plugins).some(k => k.toLowerCase().includes('token-trader'));
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
  * Main: fetch ad and print to stdout.
  */
 (async () => {
-  // If not logged in, clean up the statusLine setting and exit silently.
-  // This handles the case where the plugin was uninstalled without logout.
-  if (!fs.existsSync(AUTH_PATH)) {
+  // If the plugin has been uninstalled (or the user logged out), clean up
+  // the statusLine setting so ads stop even without an explicit logout.
+  if (!fs.existsSync(AUTH_PATH) || !isPluginInstalled()) {
     removeStatusLine();
     process.exit(0);
   }
