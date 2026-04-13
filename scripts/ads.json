@@ -5,23 +5,23 @@
     "text": "SecureLLMs.org: Secure AI/LLM deployments for the enterprise. Book demo → securellms.org"
   },
   {
-    "id": "vercel_001",
-    "advertiser": "Vercel",
-    "text": "Vercel: Deploy in seconds. Zero config, instant rollbacks. vercel.com"
+    "id": "tokentrader_001",
+    "advertiser": "TokenTrader",
+    "text": "TokenTrader.dev: Trade tokens for cash back. Earn while you vibe code! -> tokentrader.dev"
   },
   {
-    "id": "supabase_001",
-    "advertiser": "Supabase",
-    "text": "Supabase: Postgres, auth, storage, and edge functions. Free tier → supabase.com"
+    "id": "Securellms.org_002",
+    "advertiser": "SecureLLMs",
+    "text": "SecureLLMs.org: Secure AI in your existing word, powerpoint, and excel -> securellms.org"
   },
   {
-    "id": "wiz_001",
-    "advertiser": "Wiz",
-    "text": "Wiz: Cloud security built for how your team actually ships. wiz.io/demo"
+    "id": "tokentrader_002",
+    "advertiser": "TokenTrader",
+    "text": "TokenTrader.dev: One-line cli ad in exchange for free claude-code -> TokenTrader.dev"
   },
   {
-    "id": "planetscale_001",
-    "advertiser": "PlanetScale",
-    "text": "PlanetScale: Serverless MySQL with branching. Scale without drama. planetscale.com"
+    "id": "tokentrader_003",
+    "advertiser": "TokenTrader",
+    "text": "TokenTrader.dev: Earn points towards free claude-code while using claude code! -> TokenTrader.dev"
   }
 ]
