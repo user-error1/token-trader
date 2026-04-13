@@ -54,15 +54,38 @@ function ensureStatusLine() {
   return true;
 }
 
-function openBrowser(url) {
-  const cmd =
-    process.platform === 'darwin' ? 'open' :
-    process.platform === 'win32' ? 'start' :
-    'xdg-open';
+function isWSL() {
+  if (process.platform !== 'linux') return false;
+  if (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP) return true;
   try {
-    spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref();
+    return /microsoft/i.test(fs.readFileSync('/proc/version', 'utf8'));
   } catch (_) {
-    // Fall back to printing only.
+    return false;
+  }
+}
+
+function openBrowser(url) {
+  const attempts = [];
+  if (process.platform === 'darwin') {
+    attempts.push(['open', [url]]);
+  } else if (process.platform === 'win32') {
+    attempts.push(['cmd', ['/c', 'start', '""', url]]);
+  } else if (isWSL()) {
+    attempts.push(['wslview', [url]]);
+    attempts.push(['powershell.exe', ['-NoProfile', '-Command', `Start-Process '${url}'`]]);
+    attempts.push(['cmd.exe', ['/c', 'start', '""', url]]);
+  } else {
+    attempts.push(['xdg-open', [url]]);
+  }
+  for (const [cmd, args] of attempts) {
+    try {
+      const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
+      child.on('error', () => {});
+      child.unref();
+      return;
+    } catch (_) {
+      // Try next fallback.
+    }
   }
 }
 
@@ -96,10 +119,22 @@ async function run() {
   const { poll_token, user_code, verification_uri, interval, expires_in } = start.body;
   let pollMs = (interval || 5) * 1000;
 
-  console.log(`  Visit:       ${verification_uri}`);
-  console.log(`  Enter code:  ${user_code}\n`);
   openBrowser(verification_uri);
-  console.log(`(Code expires in ~${Math.round((expires_in || 900) / 60)} minutes. Waiting…)\n`);
+  const minutes = Math.round((expires_in || 900) / 60);
+  const lines = [
+    '',
+    '====================================================================',
+    '  ACTION REQUIRED — complete GitHub device login',
+    '====================================================================',
+    `  1. Open this URL:   ${verification_uri}`,
+    `  2. Enter this code: ${user_code}`,
+    '',
+    `  (Attempted to open the browser automatically. Code expires in ~${minutes} min.)`,
+    '====================================================================',
+    '',
+  ];
+  console.log(lines.join('\n'));
+  console.log('Waiting for authorization…\n');
 
   const deadline = Date.now() + (expires_in || 900) * 1000;
   let tokenData = null;
