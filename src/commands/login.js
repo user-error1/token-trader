@@ -173,7 +173,7 @@ async function run() {
   console.log(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
 
   if (ensureStatusLine()) {
-    console.log('Status line configured — ads will appear on next Claude Code session.');
+    console.log('Status line configured — ads and credit earning are now active.');
   }
 
   console.log('You are all set. Run `/token-trader:status` to see your balance.');

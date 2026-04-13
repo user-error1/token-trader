@@ -38,7 +38,7 @@ function run() {
   const removedStatusLine = removeStatusLine();
   if (had) {
     console.log('Signed out. Local auth and device key deleted.');
-    if (removedStatusLine) console.log('Status line removed — ads will stop on next Claude Code session.');
+    if (removedStatusLine) console.log('Status line removed — ads and credit earning are now stopped.');
   } else {
     console.log('No active session. (Nothing to do.)');
   }

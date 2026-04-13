@@ -169,9 +169,32 @@ function wrapAd(text, width) {
 }
 
 /**
+ * Remove the statusLine entry from ~/.claude/settings.json so ads stop.
+ * Used for self-cleanup when the plugin is uninstalled without logout.
+ */
+function removeStatusLine() {
+  try {
+    const settingsPath = path.join(os.homedir(), '.claude', 'settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    if (settings.statusLine && settings.statusLine.command &&
+        settings.statusLine.command.includes('statusline-ad.js')) {
+      delete settings.statusLine;
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+    }
+  } catch (_) {}
+}
+
+/**
  * Main: fetch ad and print to stdout.
  */
 (async () => {
+  // If not logged in, clean up the statusLine setting and exit silently.
+  // This handles the case where the plugin was uninstalled without logout.
+  if (!fs.existsSync(AUTH_PATH)) {
+    removeStatusLine();
+    process.exit(0);
+  }
+
   let ad = await fetchAdFromBackend();
 
   if (!ad) {

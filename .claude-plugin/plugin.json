@@ -6,6 +6,10 @@
     "name": "TokenTrader"
   },
   "keywords": ["ads", "terminal", "credits", "sponsored"],
+  "statusLine": {
+    "type": "command",
+    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/statusline-ad.js"
+  },
   "hooks": {
     "Stop": [
       {
