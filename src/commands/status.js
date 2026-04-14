@@ -9,6 +9,26 @@ const auth = require('../lib/auth');
 const BAR_WIDTH = 40;
 const MONTHLY_GOAL = 20.0;
 
+const MOTIVATIONAL_MESSAGES = [
+  'Free Claude Code soon.',
+  'Claude gift card in your future.',
+  'We didn\'t do it because it was easy, we did it because we thought it was going to be easy.',
+  'Keep shipping.',
+  'Momentum compounds.',
+  'You\'re building something great.',
+  'Every impression counts.',
+  'You\'re getting closer.',
+  'Keep building.',
+  'Now you\'re thinking with portals!',
+  'Mike was here :)',
+  'You da goat!',
+  'Take those tokens BACK!!',
+  'Pro Tip, use !token-trader status instead',
+  'Genuinely thank you for using this!',
+  'I made this plugin in a few days!',
+  'I barely know how to code! Claude Code Rocks!'
+];
+
 function renderBar(fraction) {
   const filled = Math.max(0, Math.min(BAR_WIDTH, Math.round(fraction * BAR_WIDTH)));
   return '[' + '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled) + ']';
@@ -58,10 +78,9 @@ async function run() {
   } else if (data.monthly_cap_reached) {
     console.log(`  You've earned a $${MONTHLY_GOAL.toFixed(2)} gift card!`);
     console.log(`  It will be issued shortly.`);
-  } else if (data.estimated_days_remaining != null) {
-    console.log(`  At your current pace, gift card in ~${data.estimated_days_remaining} days.`);
   } else {
-    console.log(`  Gift card unlocks at $${MONTHLY_GOAL.toFixed(2)}.`);
+    const msg = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+    console.log(`  ${msg}`);
   }
   console.log('');
 }
