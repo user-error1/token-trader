@@ -133,7 +133,15 @@ async function run() {
     '====================================================================',
     '',
   ];
-  console.log(lines.join('\n'));
+  const block = lines.join('\n');
+  console.log(block);
+  // Also write directly to the user's terminal so the code is visible even
+  // when the CLI is spawned as a subprocess whose stdout gets captured/summarized.
+  try {
+    fs.writeFileSync('/dev/tty', block + '\n');
+  } catch (_) {
+    // Non-interactive environment (CI, no tty) — ignore.
+  }
   console.log('Waiting for authorization…\n');
 
   const deadline = Date.now() + (expires_in || 900) * 1000;
