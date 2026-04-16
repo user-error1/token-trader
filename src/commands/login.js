@@ -204,7 +204,13 @@ async function run() {
     }
     if (poll.body?.status === 'pending') continue;
     if (poll.body?.status === 'slow_down') {
-      pollMs = (poll.body.interval || pollMs / 1000 + 5) * 1000;
+      // Per OAuth device-flow spec, slow_down means bump the interval by at
+      // least 5 seconds. The backend-suggested interval alone is insufficient
+      // if it matches our current rate — a no-op makes the next poll hit
+      // slow_down again and spin forever. Take whichever is larger.
+      const suggestedMs = (poll.body.interval || 0) * 1000;
+      pollMs = Math.max(suggestedMs, pollMs + 5000);
+      log.info(`slow_down: pollMs bumped to ${pollMs}`);
       continue;
     }
     if (poll.body?.status === 'denied') {
