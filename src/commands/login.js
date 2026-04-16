@@ -5,6 +5,7 @@
  * All in one shot. Auto-opens the verification URL in the default browser.
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const { request } = require('../lib/backend');
@@ -15,6 +16,33 @@ const {
   getPublicKeyBase64,
 } = require('../../scripts/lib/device-key');
 const { getOrCreateFingerprint } = require('../../scripts/lib/device-fingerprint');
+
+// File the skill polls to extract the verification URL and user code.
+// Claude Code truncates Bash tool stdout in its UI, so the URL/code can't be
+// surfaced reliably from there — but a small JSON file Claude can Read and
+// echo back as plain text always reaches the user uncut.
+const PENDING_LOGIN_PATH = path.join(os.homedir(), '.token-trader', '.pending-login.json');
+
+function writePendingLogin(verification_uri, user_code, expires_in) {
+  try {
+    fs.mkdirSync(path.dirname(PENDING_LOGIN_PATH), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(
+      PENDING_LOGIN_PATH,
+      JSON.stringify({
+        verification_uri,
+        user_code,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + expires_in * 1000).toISOString(),
+      }, null, 2),
+    );
+  } catch (_) {
+    // Non-fatal — Claude won't have a clean read, but the CLI itself still works.
+  }
+}
+
+function clearPendingLogin() {
+  try { fs.unlinkSync(PENDING_LOGIN_PATH); } catch (_) {}
+}
 
 /**
  * Ensure the Claude Code statusLine is configured to show ads.
@@ -91,24 +119,6 @@ function openBrowser(url) {
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-// Print a user-facing message to stdout and ALSO to /dev/tty when stdout
-// isn't a TTY. Claude Code runs this CLI as a subprocess that captures stdout
-// (and truncates it in the UI), so /dev/tty is the only channel that reliably
-// reaches the user's real terminal. When the CLI is run directly from a
-// terminal, stdout IS the terminal, so we skip /dev/tty to avoid double prints.
-function say(msg) {
-  console.log(msg);
-  if (!process.stdout.isTTY) {
-    try { fs.writeFileSync('/dev/tty', msg + '\n'); } catch (_) {}
-  }
-}
-function sayErr(msg) {
-  console.error(msg);
-  if (!process.stderr.isTTY) {
-    try { fs.writeFileSync('/dev/tty', msg + '\n'); } catch (_) {}
-  }
-}
-
 async function run() {
   if (auth.read()) {
     // Already signed in — still ensure status line is configured (fixes
@@ -130,7 +140,7 @@ async function run() {
 
   const start = await request('POST', '/api/v1/auth/device/start', {});
   if (start.status !== 200) {
-    sayErr(`Failed to start device flow: ${JSON.stringify(start.body)}`);
+    console.error(`Failed to start device flow: ${JSON.stringify(start.body)}`);
     process.exit(1);
   }
 
@@ -141,6 +151,15 @@ async function run() {
   // gracefully (instead of being killed) when invoked from /token-trader:login.
   const MAX_POLL_SECONDS = 9 * 60;
   const expires_in = Math.min(start.body.expires_in || 900, MAX_POLL_SECONDS);
+
+  // Drop the URL/code into a known file IMMEDIATELY so the /token-trader:login
+  // skill can read them and surface them to the user as plain text. Bash tool
+  // stdout gets truncated in Claude Code's UI, so this side-channel is the
+  // only reliable way to get the values in front of the user.
+  writePendingLogin(verification_uri, user_code, expires_in);
+  process.on('exit', clearPendingLogin);
+  process.on('SIGINT', () => { clearPendingLogin(); process.exit(130); });
+  process.on('SIGTERM', () => { clearPendingLogin(); process.exit(143); });
 
   openBrowser(verification_uri);
   const minutes = Math.round(expires_in / 60);
@@ -156,8 +175,8 @@ async function run() {
     '====================================================================',
     '',
   ];
-  say(lines.join('\n'));
-  say('Waiting for authorization…\n');
+  console.log(lines.join('\n'));
+  console.log('Waiting for authorization…\n');
 
   const deadline = Date.now() + expires_in * 1000;
   let tokenData = null;
@@ -174,33 +193,33 @@ async function run() {
       continue;
     }
     if (poll.body.status === 'denied') {
-      sayErr('Authorization denied. Aborting.');
+      console.error('Authorization denied. Aborting.');
       process.exit(1);
     }
     if (poll.body.status === 'expired' || poll.status === 404) {
-      sayErr('Device code expired. Run `/token-trader:login` again.');
+      console.error('Device code expired. Run `/token-trader:login` again.');
       process.exit(1);
     }
     // Anything else (5xx, unexpected shape) — bail out loudly instead of looping forever.
     if (poll.status >= 400) {
-      sayErr(`\nBackend error during poll: ${poll.status} ${poll.body?.error || JSON.stringify(poll.body)}`);
-      sayErr('Check `fly logs` and re-run `/token-trader:login`.');
+      console.error(`\nBackend error during poll: ${poll.status} ${poll.body?.error || JSON.stringify(poll.body)}`);
+      console.error('Check `fly logs` and re-run `/token-trader:login`.');
       process.exit(1);
     }
   }
   if (!tokenData) {
-    sayErr('Timed out waiting for authorization. Re-run `/token-trader:login`.');
+    console.error('Timed out waiting for authorization. Re-run `/token-trader:login`.');
     process.exit(1);
   }
 
-  say(`Authorized as @${tokenData.user.github_username}.`);
+  console.log(`Authorized as @${tokenData.user.github_username}.`);
   if (!tokenData.user.github_verified) {
-    say(
+    console.log(
       '  (account does not meet the 6-month age requirement — you can still see ads,\n' +
       '   but earnings are paused until your account ages in)'
     );
   }
-  say('Registering device…');
+  console.log('Registering device…');
 
   const reg = await request(
     'POST',
@@ -210,12 +229,12 @@ async function run() {
   );
 
   if (reg.status === 409) {
-    sayErr('\nThis machine is already registered to a different TokenTrader account.');
-    sayErr('Each physical machine can only feed one earning account.');
+    console.error('\nThis machine is already registered to a different TokenTrader account.');
+    console.error('Each physical machine can only feed one earning account.');
     process.exit(1);
   }
   if (reg.status !== 200) {
-    sayErr(`Device registration failed: ${JSON.stringify(reg.body)}`);
+    console.error(`Device registration failed: ${JSON.stringify(reg.body)}`);
     process.exit(1);
   }
 
@@ -228,13 +247,13 @@ async function run() {
   });
 
   log.info(`login ok user=${tokenData.user.github_username} device=${reg.body.device_id}`);
-  say(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
+  console.log(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
 
   if (ensureStatusLine()) {
-    say('Status line configured — ads and credit earning are now active.');
+    console.log('Status line configured — ads and credit earning are now active.');
   }
 
-  say('You are all set. Run `/token-trader:status` to see your balance.');
+  console.log('You are all set. Run `/token-trader:status` to see your balance.');
 }
 
 module.exports = { run };
