@@ -180,23 +180,38 @@ async function run() {
 
   const deadline = Date.now() + expires_in * 1000;
   let tokenData = null;
+  let pollCount = 0;
   while (Date.now() < deadline) {
     await sleep(pollMs);
-    const poll = await request('POST', '/api/v1/auth/device/poll', { poll_token });
+    pollCount++;
+
+    let poll;
+    try {
+      poll = await request('POST', '/api/v1/auth/device/poll', { poll_token });
+    } catch (err) {
+      // Transient network failures (timeout, DNS, etc.) should not abort the
+      // whole flow — on flaky networks (WSL, VPNs) a single failed poll can
+      // happen while auth is still in progress. Log and retry next tick.
+      log.warn(`poll #${pollCount} failed: ${err.message}`);
+      continue;
+    }
+
+    log.info(`poll #${pollCount} -> status=${poll.status} body.status=${poll.body?.status || '(none)'}`);
+
     if (poll.status === 200 && poll.body.status === 'complete') {
       tokenData = poll.body;
       break;
     }
-    if (poll.body.status === 'pending') continue;
-    if (poll.body.status === 'slow_down') {
+    if (poll.body?.status === 'pending') continue;
+    if (poll.body?.status === 'slow_down') {
       pollMs = (poll.body.interval || pollMs / 1000 + 5) * 1000;
       continue;
     }
-    if (poll.body.status === 'denied') {
+    if (poll.body?.status === 'denied') {
       console.error('Authorization denied. Aborting.');
       process.exit(1);
     }
-    if (poll.body.status === 'expired' || poll.status === 404) {
+    if (poll.body?.status === 'expired' || poll.status === 404) {
       console.error('Device code expired. Run `/token-trader:login` again.');
       process.exit(1);
     }
@@ -206,6 +221,8 @@ async function run() {
       console.error('Check `fly logs` and re-run `/token-trader:login`.');
       process.exit(1);
     }
+    // Unknown 2xx response shape — don't silently loop, log it for diagnosis.
+    log.warn(`poll #${pollCount} unexpected response: status=${poll.status} body=${JSON.stringify(poll.body)}`);
   }
   if (!tokenData) {
     console.error('Timed out waiting for authorization. Re-run `/token-trader:login`.');
