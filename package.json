@@ -1,6 +1,6 @@
 {
   "name": "token-trader",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Claude Code plugin for earning credits by viewing unobtrusive 1-line ASCII sponsored ads in the terminal.",
   "bin": {
     "token-trader": "bin/token-trader"
