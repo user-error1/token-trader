@@ -116,11 +116,16 @@ async function run() {
     process.exit(1);
   }
 
-  const { poll_token, user_code, verification_uri, interval, expires_in } = start.body;
+  const { poll_token, user_code, verification_uri, interval } = start.body;
   let pollMs = (interval || 5) * 1000;
 
+  // Cap the poll window below the Bash tool's 10-min max so the CLI exits
+  // gracefully (instead of being killed) when invoked from /token-trader:login.
+  const MAX_POLL_SECONDS = 9 * 60;
+  const expires_in = Math.min(start.body.expires_in || 900, MAX_POLL_SECONDS);
+
   openBrowser(verification_uri);
-  const minutes = Math.round((expires_in || 900) / 60);
+  const minutes = Math.round(expires_in / 60);
   const lines = [
     '',
     '====================================================================',
@@ -136,7 +141,7 @@ async function run() {
   console.log(lines.join('\n'));
   console.log('Waiting for authorization…\n');
 
-  const deadline = Date.now() + (expires_in || 900) * 1000;
+  const deadline = Date.now() + expires_in * 1000;
   let tokenData = null;
   while (Date.now() < deadline) {
     await sleep(pollMs);
