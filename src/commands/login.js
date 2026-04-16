@@ -138,7 +138,17 @@ async function run() {
     '====================================================================',
     '',
   ];
-  console.log(lines.join('\n'));
+  const block = lines.join('\n');
+  console.log(block);
+  // Claude Code truncates captured Bash output in its UI, which hides the
+  // ACTION REQUIRED block unless the user manually expands it. Writing to
+  // /dev/tty bypasses that capture and shows the URL + code directly in the
+  // user's terminal, so they can always see what to do.
+  try {
+    fs.writeFileSync('/dev/tty', block + '\n');
+  } catch (_) {
+    // Non-interactive environment (CI, no tty) — fall back to stdout only.
+  }
   console.log('Waiting for authorization…\n');
 
   const deadline = Date.now() + expires_in * 1000;

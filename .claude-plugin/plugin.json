@@ -1,6 +1,6 @@
 {
   "name": "token-trader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Earn credits for Claude Pro by displaying 1-line ASCII sponsored ads in the Claude Code status line.",
   "author": {
     "name": "TokenTrader"
