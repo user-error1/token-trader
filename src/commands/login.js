@@ -91,6 +91,24 @@ function openBrowser(url) {
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
+// Print a user-facing message to stdout and ALSO to /dev/tty when stdout
+// isn't a TTY. Claude Code runs this CLI as a subprocess that captures stdout
+// (and truncates it in the UI), so /dev/tty is the only channel that reliably
+// reaches the user's real terminal. When the CLI is run directly from a
+// terminal, stdout IS the terminal, so we skip /dev/tty to avoid double prints.
+function say(msg) {
+  console.log(msg);
+  if (!process.stdout.isTTY) {
+    try { fs.writeFileSync('/dev/tty', msg + '\n'); } catch (_) {}
+  }
+}
+function sayErr(msg) {
+  console.error(msg);
+  if (!process.stderr.isTTY) {
+    try { fs.writeFileSync('/dev/tty', msg + '\n'); } catch (_) {}
+  }
+}
+
 async function run() {
   if (auth.read()) {
     // Already signed in — still ensure status line is configured (fixes
@@ -112,7 +130,7 @@ async function run() {
 
   const start = await request('POST', '/api/v1/auth/device/start', {});
   if (start.status !== 200) {
-    console.error('Failed to start device flow:', start.body);
+    sayErr(`Failed to start device flow: ${JSON.stringify(start.body)}`);
     process.exit(1);
   }
 
@@ -138,18 +156,8 @@ async function run() {
     '====================================================================',
     '',
   ];
-  const block = lines.join('\n');
-  console.log(block);
-  // Claude Code truncates captured Bash output in its UI, which hides the
-  // ACTION REQUIRED block unless the user manually expands it. Writing to
-  // /dev/tty bypasses that capture and shows the URL + code directly in the
-  // user's terminal, so they can always see what to do.
-  try {
-    fs.writeFileSync('/dev/tty', block + '\n');
-  } catch (_) {
-    // Non-interactive environment (CI, no tty) — fall back to stdout only.
-  }
-  console.log('Waiting for authorization…\n');
+  say(lines.join('\n'));
+  say('Waiting for authorization…\n');
 
   const deadline = Date.now() + expires_in * 1000;
   let tokenData = null;
@@ -166,33 +174,33 @@ async function run() {
       continue;
     }
     if (poll.body.status === 'denied') {
-      console.error('Authorization denied. Aborting.');
+      sayErr('Authorization denied. Aborting.');
       process.exit(1);
     }
     if (poll.body.status === 'expired' || poll.status === 404) {
-      console.error('Device code expired. Run `/token-trader:login` again.');
+      sayErr('Device code expired. Run `/token-trader:login` again.');
       process.exit(1);
     }
     // Anything else (5xx, unexpected shape) — bail out loudly instead of looping forever.
     if (poll.status >= 400) {
-      console.error(`\nBackend error during poll: ${poll.status} ${poll.body?.error || JSON.stringify(poll.body)}`);
-      console.error('Check `fly logs` and re-run `/token-trader:login`.');
+      sayErr(`\nBackend error during poll: ${poll.status} ${poll.body?.error || JSON.stringify(poll.body)}`);
+      sayErr('Check `fly logs` and re-run `/token-trader:login`.');
       process.exit(1);
     }
   }
   if (!tokenData) {
-    console.error('Timed out waiting for authorization.');
+    sayErr('Timed out waiting for authorization. Re-run `/token-trader:login`.');
     process.exit(1);
   }
 
-  console.log(`Authorized as @${tokenData.user.github_username}.`);
+  say(`Authorized as @${tokenData.user.github_username}.`);
   if (!tokenData.user.github_verified) {
-    console.log(
+    say(
       '  (account does not meet the 6-month age requirement — you can still see ads,\n' +
       '   but earnings are paused until your account ages in)'
     );
   }
-  console.log('Registering device…');
+  say('Registering device…');
 
   const reg = await request(
     'POST',
@@ -202,12 +210,12 @@ async function run() {
   );
 
   if (reg.status === 409) {
-    console.error('\nThis machine is already registered to a different TokenTrader account.');
-    console.error('Each physical machine can only feed one earning account.');
+    sayErr('\nThis machine is already registered to a different TokenTrader account.');
+    sayErr('Each physical machine can only feed one earning account.');
     process.exit(1);
   }
   if (reg.status !== 200) {
-    console.error('Device registration failed:', reg.body);
+    sayErr(`Device registration failed: ${JSON.stringify(reg.body)}`);
     process.exit(1);
   }
 
@@ -220,13 +228,13 @@ async function run() {
   });
 
   log.info(`login ok user=${tokenData.user.github_username} device=${reg.body.device_id}`);
-  console.log(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
+  say(`\nDevice registered (${reg.body.active_device_count}/3 active).`);
 
   if (ensureStatusLine()) {
-    console.log('Status line configured — ads and credit earning are now active.');
+    say('Status line configured — ads and credit earning are now active.');
   }
 
-  console.log('You are all set. Run `/token-trader:status` to see your balance.');
+  say('You are all set. Run `/token-trader:status` to see your balance.');
 }
 
 module.exports = { run };
