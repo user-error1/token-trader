@@ -105,21 +105,37 @@ function openBrowser(url) {
   } else {
     attempts.push(['xdg-open', [url]]);
   }
-  for (const [cmd, args] of attempts) {
+  // spawn() emits ENOENT asynchronously, so a synchronous for-loop that
+  // returns after the first spawn never reaches its fallbacks. Chain them
+  // via the 'error' event instead.
+  function tryNext(i) {
+    if (i >= attempts.length) return;
+    const [cmd, args] = attempts[i];
+    let child;
     try {
-      const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
-      child.on('error', () => {});
-      child.unref();
-      return;
+      child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
     } catch (_) {
-      // Try next fallback.
+      tryNext(i + 1);
+      return;
     }
+    child.on('error', () => tryNext(i + 1));
+    child.unref();
   }
+  tryNext(0);
 }
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 async function run() {
+  // Remove any stale pending-login file from a prior run. Exit/SIGINT handlers
+  // don't fire when the process is SIGKILLed (Bash tool 10-min ceiling), so
+  // the file can outlive its user_code. The /token-trader:login skill reads
+  // this file a couple seconds after launch — if a stale one is left behind,
+  // it races the new /auth/device/start response and the skill can echo an
+  // expired code to the user. Clear first so the skill's `cat` fails until a
+  // fresh file is written.
+  clearPendingLogin();
+
   if (auth.read()) {
     // Already signed in — still ensure status line is configured (fixes
     // upgrades and fresh installs that skipped install.sh).
